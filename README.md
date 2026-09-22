@@ -21,7 +21,8 @@ RiskPulse DeepML/
 ├── artifacts/                        # Saved models, encoders, scalers, calibration curves & SHAP plots
 ├── notebooks/                        # Exploratory Data Analysis & experiment notebooks
 │   ├── 01_exploratory_data_analysis.ipynb
-│   └── 02_data_validation_and_cleaning.ipynb
+│   ├── 02_data_validation_and_cleaning.ipynb
+│   └── 03_feature_engineering_and_preprocessing.ipynb
 ├── tests/                            # Unit & Integration test suite
 ├── requirements.txt                  # Python dependencies
 ├── .gitignore                        # Git exclusion rules
