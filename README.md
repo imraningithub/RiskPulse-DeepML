@@ -22,7 +22,8 @@ RiskPulse DeepML/
 ├── notebooks/                        # Exploratory Data Analysis & experiment notebooks
 │   ├── 01_exploratory_data_analysis.ipynb
 │   ├── 02_data_validation_and_cleaning.ipynb
-│   └── 03_feature_engineering_and_preprocessing.ipynb
+│   ├── 03_feature_engineering_and_preprocessing.ipynb
+│   └── 04_model_training_and_evaluation.ipynb
 ├── tests/                            # Unit & Integration test suite
 ├── requirements.txt                  # Python dependencies
 ├── .gitignore                        # Git exclusion rules
