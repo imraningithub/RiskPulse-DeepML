@@ -8,9 +8,6 @@ scipy>=1.10.0
 xgboost>=1.7.0
 imbalanced-learn>=0.11.0
 
-# Deep Learning (Keras / TensorFlow)
-tensorflow>=2.13.0
-
 # Model Interpretability & Calibration
 shap>=0.42.0
 
