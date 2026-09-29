@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import requests
 import os
+import time
 import matplotlib.pyplot as plt
 
 st.set_page_config(
@@ -12,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Hallmark Modern-Minimal Design System (CSS Tokens & Aesthetics)
+# Hallmark Modern-Minimal Design System (High-Contrast Tokens & Entrance Motion)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -26,10 +27,60 @@ st.markdown("""
         color: #F8FAFC;
     }
 
+    /* Input Field Label Styling - Bright, High Contrast */
+    label[data-testid="stWidgetLabel"], 
+    .stWidgetLabel p, 
+    label, 
+    div[data-baseweb="select"] span,
+    .stNumberInput p,
+    .stSelectbox p,
+    .stFileUploader p {
+        color: #E2E8F0 !important;
+        font-weight: 600 !important;
+        font-size: 0.92rem !important;
+        letter-spacing: 0.01em !important;
+    }
+
+    /* Form Input Fields Background & Border */
+    div[data-baseweb="input"] input, 
+    div[data-baseweb="select"] > div {
+        background-color: #121826 !important;
+        color: #F8FAFC !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+    }
+    div[data-baseweb="input"] input:focus, 
+    div[data-baseweb="select"] > div:focus {
+        border-color: #38BDF8 !important;
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important;
+    }
+
+    /* Keyframe Animations for Smooth Motion */
+    @keyframes slideUpFade {
+        0% {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.1); }
+        50% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); }
+        100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.1); }
+    }
+
+    .animated-result {
+        animation: slideUpFade 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     /* Header Banner */
     .hallmark-header {
         background: linear-gradient(135deg, #121826 0%, #1E293B 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 16px;
         padding: 28px 36px;
         margin-bottom: 24px;
@@ -45,7 +96,7 @@ st.markdown("""
         margin-bottom: 4px;
     }
     .hallmark-subtitle {
-        color: #94A3B8;
+        color: #CBD5E1;
         font-size: 0.95rem;
         font-weight: 500;
     }
@@ -53,43 +104,49 @@ st.markdown("""
     /* Metric Cards */
     .hallmark-card {
         background: #121826;
-        border: 1px solid rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 14px;
         padding: 20px;
         margin-bottom: 16px;
+        animation: slideUpFade 0.5s ease-out forwards;
         transition: transform 0.2s ease, border-color 0.2s ease;
     }
     .hallmark-card:hover {
-        border-color: rgba(56, 189, 248, 0.3);
+        border-color: rgba(56, 189, 248, 0.4);
+        transform: translateY(-2px);
     }
     .card-label {
-        font-size: 0.75rem;
+        font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #64748B;
+        color: #94A3B8;
         margin-bottom: 8px;
     }
     .card-value {
-        font-size: 1.8rem;
+        font-size: 1.85rem;
         font-weight: 800;
         color: #F8FAFC;
     }
     
-    /* Decision Hero Cards */
+    /* Decision Hero Cards with Motion */
     .decision-approved {
-        background: rgba(16, 185, 129, 0.08);
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.1);
+        border: 1.5px solid rgba(16, 185, 129, 0.4);
         border-radius: 14px;
         padding: 24px;
         text-align: center;
+        animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.25);
     }
     .decision-rejected {
-        background: rgba(244, 63, 94, 0.08);
-        border: 1px solid rgba(244, 63, 94, 0.3);
+        background: rgba(244, 63, 94, 0.1);
+        border: 1.5px solid rgba(244, 63, 94, 0.4);
         border-radius: 14px;
         padding: 24px;
         text-align: center;
+        animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        box-shadow: 0 8px 25px -5px rgba(244, 63, 94, 0.25);
     }
     
     .status-badge {
@@ -101,9 +158,9 @@ st.markdown("""
         border-radius: 6px;
         text-transform: uppercase;
     }
-    .badge-success { background: rgba(16, 185, 129, 0.2); color: #34D399; }
-    .badge-warning { background: rgba(245, 158, 11, 0.2); color: #FBBF24; }
-    .badge-danger { background: rgba(244, 63, 94, 0.2); color: #F87171; }
+    .badge-success { background: rgba(16, 185, 129, 0.25); color: #34D399; }
+    .badge-warning { background: rgba(245, 158, 11, 0.25); color: #FBBF24; }
+    .badge-danger { background: rgba(244, 63, 94, 0.25); color: #F87171; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -190,77 +247,93 @@ with tab1:
             "cb_person_cred_hist_length": int(cb_person_cred_hist_length)
         }
 
-        try:
-            exp_res = requests.post(f"{API_URL}/explain", json=payload, timeout=10)
-            if exp_res.status_code == 200:
-                result = exp_res.json()
-                prob = result["default_probability"]
-                is_def = result["is_default"]
-                category = result["risk_category"]
-                drivers = result["drivers"]
-
-                st.markdown("---")
-                st.subheader("Automated Credit Risk Assessment")
-
-                m1, m2, m3 = st.columns(3)
-
-                with m1:
-                    st.markdown(f"""
-                    <div class="hallmark-card">
-                        <div class="card-label">Calibrated Probability</div>
-                        <div class="card-value" style="color: {'#F43F5E' if prob > 0.45 else '#10B981'};">{prob * 100:.1f}%</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with m2:
-                    st.markdown(f"""
-                    <div class="hallmark-card">
-                        <div class="card-label">Assigned Risk Category</div>
-                        <div class="card-value">{category}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with m3:
-                    if is_def == 1:
-                        st.markdown("""
-                        <div class="decision-rejected">
-                            <h3 style="color: #F43F5E; margin:0;">❌ REJECT LOAN</h3>
-                            <p style="color: #94A3B8; margin:4px 0 0 0; font-size:0.85rem;">High Predicted Default Risk</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown("""
-                        <div class="decision-approved">
-                            <h3 style="color: #10B981; margin:0;">✅ APPROVE LOAN</h3>
-                            <p style="color: #94A3B8; margin:4px 0 0 0; font-size:0.85rem;">Acceptable Default Risk Profile</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                # SHAP Feature Drivers Chart
-                st.markdown("#### 🔍 SHAP Local Feature Attribution Drivers")
-                drivers_df = pd.DataFrame(drivers)
-
-                fig, ax = plt.subplots(figsize=(10, 4))
-                colors = ['#F43F5E' if imp > 0 else '#10B981' for imp in drivers_df['impact']]
+        # Analyzing Status with Progress Animation
+        with st.status("🔍 Analyzing applicant profile & calculating SHAP drivers...", expanded=True) as status_box:
+            st.write("📡 Connecting to RiskPulse DeepML Microservice...")
+            time.sleep(0.3)
+            st.write("⚡ Computing Platt-calibrated default probability...")
+            time.sleep(0.3)
+            
+            try:
+                exp_res = requests.post(f"{API_URL}/explain", json=payload, timeout=10)
+                st.write("🔍 Extracting local SHAP feature attributions...")
+                time.sleep(0.2)
                 
-                ax.barh(drivers_df['feature'], drivers_df['impact'], color=colors)
-                ax.axvline(0, color='#64748B', linewidth=1, linestyle='--')
-                ax.set_xlabel('SHAP Impact on Default Risk')
-                ax.set_facecolor('#121826')
-                fig.patch.set_facecolor('#121826')
-                ax.tick_params(colors='#F8FAFC')
-                ax.xaxis.label.set_color('#F8FAFC')
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-                ax.spines['left'].set_color('#334155')
-                ax.spines['bottom'].set_color('#334155')
+                if exp_res.status_code == 200:
+                    status_box.update(label="✅ Credit Risk Assessment Complete!", state="complete", expanded=False)
+                    result = exp_res.json()
+                    prob = result["default_probability"]
+                    is_def = result["is_default"]
+                    category = result["risk_category"]
+                    drivers = result["drivers"]
 
-                st.pyplot(fig)
+                    # Animated Result Section Container
+                    st.markdown('<div class="animated-result">', unsafe_allow_html=True)
+                    st.markdown("---")
+                    st.subheader("Automated Credit Risk Assessment")
 
-            else:
-                st.error(f"Error from API: {exp_res.text}")
-        except Exception as e:
-            st.error(f"Connection failed: {str(e)}")
+                    m1, m2, m3 = st.columns(3)
+
+                    with m1:
+                        st.markdown(f"""
+                        <div class="hallmark-card">
+                            <div class="card-label">Calibrated Default Probability</div>
+                            <div class="card-value" style="color: {'#F43F5E' if prob > 0.45 else '#10B981'};">{prob * 100:.1f}%</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    with m2:
+                        st.markdown(f"""
+                        <div class="hallmark-card">
+                            <div class="card-label">Assigned Risk Category</div>
+                            <div class="card-value">{category}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    with m3:
+                        if is_def == 1:
+                            st.markdown("""
+                            <div class="decision-rejected">
+                                <h3 style="color: #F43F5E; margin:0;">❌ REJECT LOAN</h3>
+                                <p style="color: #CBD5E1; margin:4px 0 0 0; font-size:0.85rem;">High Predicted Default Risk</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div class="decision-approved">
+                                <h3 style="color: #10B981; margin:0;">✅ APPROVE LOAN</h3>
+                                <p style="color: #CBD5E1; margin:4px 0 0 0; font-size:0.85rem;">Acceptable Default Risk Profile</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                    # SHAP Feature Drivers Chart with Motion
+                    st.markdown("#### 🔍 SHAP Local Feature Attribution Drivers")
+                    drivers_df = pd.DataFrame(drivers)
+
+                    fig, ax = plt.subplots(figsize=(10, 4))
+                    colors = ['#F43F5E' if imp > 0 else '#10B981' for imp in drivers_df['impact']]
+                    
+                    ax.barh(drivers_df['feature'], drivers_df['impact'], color=colors)
+                    ax.axvline(0, color='#64748B', linewidth=1, linestyle='--')
+                    ax.set_xlabel('SHAP Impact on Default Risk')
+                    ax.set_facecolor('#121826')
+                    fig.patch.set_facecolor('#121826')
+                    ax.tick_params(colors='#F8FAFC')
+                    ax.xaxis.label.set_color('#F8FAFC')
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    ax.spines['left'].set_color('#334155')
+                    ax.spines['bottom'].set_color('#334155')
+
+                    st.pyplot(fig)
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                else:
+                    status_box.update(label="❌ Assessment Failed", state="error", expanded=True)
+                    st.error(f"Error from API: {exp_res.text}")
+            except Exception as e:
+                status_box.update(label="❌ Connection Failed", state="error", expanded=True)
+                st.error(f"Connection failed: {str(e)}")
 
 
 # TAB 2: PORTFOLIO BATCH ANALYTICS
@@ -274,44 +347,50 @@ with tab2:
         st.dataframe(df_batch.head(3), use_container_width=True)
 
         if st.button("🚀 Score Portfolio Batch", type="primary"):
-            try:
-                records = df_batch.to_dict(orient="records")
-                res = requests.post(f"{API_URL}/predict/batch", json={"applications": records})
-                if res.status_code == 200:
-                    batch_res = res.json()
-                    preds_df = pd.DataFrame(batch_res["predictions"])
-                    final_df = pd.concat([df_batch, preds_df], axis=1)
+            with st.status("📊 Scoring batch loan portfolio...", expanded=True) as batch_status:
+                try:
+                    records = df_batch.to_dict(orient="records")
+                    res = requests.post(f"{API_URL}/predict/batch", json={"applications": records})
+                    if res.status_code == 200:
+                        batch_status.update(label="✅ Batch Scoring Complete!", state="complete", expanded=False)
+                        batch_res = res.json()
+                        preds_df = pd.DataFrame(batch_res["predictions"])
+                        final_df = pd.concat([df_batch, preds_df], axis=1)
 
-                    total = len(final_df)
-                    approved = (final_df['is_default'] == 0).sum()
-                    rejected = (final_df['is_default'] == 1).sum()
-                    avg_prob = final_df['default_probability'].mean()
+                        total = len(final_df)
+                        approved = (final_df['is_default'] == 0).sum()
+                        rejected = (final_df['is_default'] == 1).sum()
+                        avg_prob = final_df['default_probability'].mean()
 
-                    st.markdown("---")
-                    b1, b2, b3, b4 = st.columns(4)
+                        st.markdown('<div class="animated-result">', unsafe_allow_html=True)
+                        st.markdown("---")
+                        b1, b2, b3, b4 = st.columns(4)
 
-                    with b1:
-                        st.metric("Total Scored", total)
-                    with b2:
-                        st.metric("Approved Loans", approved, delta=f"{approved/total*100:.1f}% approval")
-                    with b3:
-                        st.metric("Rejected Loans", rejected, delta=f"-{rejected/total*100:.1f}% rejection")
-                    with b4:
-                        st.metric("Portfolio Avg Risk", f"{avg_prob*100:.2f}%")
+                        with b1:
+                            st.metric("Total Scored", total)
+                        with b2:
+                            st.metric("Approved Loans", approved, delta=f"{approved/total*100:.1f}% approval")
+                        with b3:
+                            st.metric("Rejected Loans", rejected, delta=f"-{rejected/total*100:.1f}% rejection")
+                        with b4:
+                            st.metric("Portfolio Avg Risk", f"{avg_prob*100:.2f}%")
 
-                    st.dataframe(final_df, use_container_width=True)
+                        st.dataframe(final_df, use_container_width=True)
 
-                    csv_export = final_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="📥 Export Scored Credit Risk CSV",
-                        data=csv_export,
-                        file_name="riskpulse_scored_portfolio.csv",
-                        mime="text/csv"
-                    )
-                else:
-                    st.error(f"Batch API error: {res.text}")
-            except Exception as e:
-                st.error(f"Batch scoring failed: {str(e)}")
+                        csv_export = final_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="📥 Export Scored Credit Risk CSV",
+                            data=csv_export,
+                            file_name="riskpulse_scored_portfolio.csv",
+                            mime="text/csv"
+                        )
+                        st.markdown('</div>', unsafe_allow_html=True)
+                    else:
+                        batch_status.update(label="❌ Batch Failed", state="error", expanded=True)
+                        st.error(f"Batch API error: {res.text}")
+                except Exception as e:
+                    batch_status.update(label="❌ Execution Error", state="error", expanded=True)
+                    st.error(f"Batch scoring failed: {str(e)}")
 
 
 # TAB 3: THRESHOLD & CALIBRATION SIMULATOR
