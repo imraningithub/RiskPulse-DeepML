@@ -27,6 +27,17 @@ class BatchRiskPredictionResponse(BaseModel):
     predictions: List[RiskPredictionResult]
     total_processed: int
 
+class FeatureDriver(BaseModel):
+    feature: str
+    impact: float
+    direction: str
+
+class ExplainResponse(BaseModel):
+    default_probability: float
+    is_default: int
+    risk_category: str
+    drivers: List[FeatureDriver]
+
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool

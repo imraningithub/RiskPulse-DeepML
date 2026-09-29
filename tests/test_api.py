@@ -35,3 +35,25 @@ def test_predict_endpoint():
     assert "default_probability" in data
     assert "is_default" in data
     assert "risk_category" in data
+
+def test_explain_endpoint():
+    payload = {
+        "person_age": 28,
+        "person_income": 65000,
+        "person_home_ownership": "RENT",
+        "person_emp_length": 4.0,
+        "loan_intent": "EDUCATION",
+        "loan_grade": "B",
+        "loan_amnt": 10000,
+        "loan_int_rate": 11.14,
+        "loan_percent_income": 0.15,
+        "cb_person_default_on_file": "N",
+        "cb_person_cred_hist_length": 4
+    }
+    response = client.post("/explain", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "default_probability" in data
+    assert "drivers" in data
+    assert isinstance(data["drivers"], list)
+    assert len(data["drivers"]) > 0

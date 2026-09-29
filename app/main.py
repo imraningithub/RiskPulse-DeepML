@@ -7,6 +7,7 @@ from app.schemas import (
     BatchLoanApplicationSchema,
     RiskPredictionResult,
     BatchRiskPredictionResponse,
+    ExplainResponse,
     HealthResponse
 )
 from app.dependencies import get_prediction_pipeline
@@ -70,6 +71,39 @@ def predict_single_loan(
         return results[0]
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/explain", response_model=ExplainResponse, tags=["Inference"])
+def explain_loan_prediction(
+    payload: LoanApplicationSchema,
+    predictor: PredictPipeline = Depends(get_prediction_pipeline)
+):
+    try:
+        custom_data = CustomData(
+            person_age=payload.person_age,
+            person_income=payload.person_income,
+            person_home_ownership=payload.person_home_ownership,
+            person_emp_length=payload.person_emp_length,
+            loan_intent=payload.loan_intent,
+            loan_grade=payload.loan_grade,
+            loan_amnt=payload.loan_amnt,
+            loan_int_rate=payload.loan_int_rate,
+            loan_percent_income=payload.loan_percent_income,
+            cb_person_default_on_file=payload.cb_person_default_on_file,
+            cb_person_cred_hist_length=payload.cb_person_cred_hist_length
+        )
+        features_df = custom_data.get_data_as_data_frame()
+        pred_results = predictor.predict(features_df)[0]
+        drivers = predictor.explain(features_df)
+
+        return ExplainResponse(
+            default_probability=pred_results["default_probability"],
+            is_default=pred_results["is_default"],
+            risk_category=pred_results["risk_category"],
+            drivers=drivers
+        )
+    except Exception as e:
+        logger.error(f"Explanation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/predict/batch", response_model=BatchRiskPredictionResponse, tags=["Inference"])
