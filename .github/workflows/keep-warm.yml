@@ -1,0 +1,20 @@
+name: Keep Render services warm
+
+# Render free web services sleep after ~15 min idle. Ping both every 10 min during
+# the daytime only (07:00-18:59 UTC = ~9am-9pm CEST), because free instances share
+# ~750 hours/month per workspace and 24/7 uptime for two services would exhaust it.
+on:
+  schedule:
+    - cron: "*/10 7-18 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping API and UI
+        run: |
+          curl -fsS --retry 3 --retry-delay 15 --max-time 90 https://riskpulse-api-4alt.onrender.com/health
+          echo
+          curl -fsS --retry 3 --retry-delay 15 --max-time 90 -o /dev/null -w "ui: %{http_code}\n" https://riskpulse-ui.onrender.com
