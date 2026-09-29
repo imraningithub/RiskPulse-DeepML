@@ -1,84 +1,101 @@
 # RiskPulse DeepML 🛡️⚡
 > **Calibrated Machine Learning, Deep Learning & Explainable AI (SHAP) Credit Risk Platform**
 
-`RiskPulse DeepML` is an end-to-end, enterprise-grade Machine Learning system designed for credit risk assessment and default probability forecasting. Built with **Scikit-Learn**, **XGBoost**, **Keras/TensorFlow**, **Probability Calibration (Platt / Isotonic Scaling)**, **SHAP (SHapley Additive exPlanations)**, and served via a high-performance **FastAPI microservice**.
+`RiskPulse DeepML` is an end-to-end, enterprise-grade Machine Learning system designed for credit risk assessment and default probability forecasting. Built with **Scikit-Learn**, **XGBoost**, **Probability Calibration (Platt Scaling)**, **FastAPI Microservice**, **Streamlit Web Dashboard**, and **Docker Containerization**.
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Production Directory Architecture
 
 ```text
-RiskPulse DeepML/
-├── data/
+Credit Risk/
+├── app/                              # FastAPI Web Server & Pydantic Schemas
+│   ├── __init__.py
+│   ├── main.py                       # FastAPI application entry point & routes
+│   ├── schemas.py                    # Pydantic request & response validation schemas
+│   └── dependencies.py               # Dependency injection & model singleton loader
+├── ui/                               # Streamlit Web UI Dashboard
+│   ├── __init__.py
+│   └── app.py                        # Streamlit dashboard for single & batch loan scoring
+├── src/                              # Modular Machine Learning Engine
+│   ├── __init__.py
+│   ├── config/                       # Data & artifact configuration specs
+│   │   ├── __init__.py
+│   │   └── configuration.py
+│   ├── components/                   # Core ML components (Ingestion, Trainer, Calibrator, Evaluator)
+│   │   └── __init__.py
+│   ├── pipeline/                     # Production training & prediction orchestrators
+│   │   ├── __init__.py
+│   │   ├── train_pipeline.py         # End-to-end model retraining pipeline script
+│   │   └── predict_pipeline.py       # Real-time inference prediction engine
+│   └── utils/                        # Logging & Exception handling helpers
+│       ├── __init__.py
+│       ├── logger.py                 # Centralized logging configuration
+│       └── exception.py              # Custom exception wrapper
+├── artifacts/                        # Serialized production model & threshold artifacts
+│   ├── credit_risk_model.pkl         # Trained & calibrated XGBoost pipeline
+│   └── best_threshold.pkl            # Decision threshold optimization artifact
+├── data/                             # Raw & processed credit risk datasets
 │   ├── credit_risk_dataset.csv       # Raw credit risk dataset
 │   └── cleaned_credit_risk_dataset.csv # Processed & validated dataset
-├── src/                              # Modular Machine Learning Pipeline
-│   ├── config/                       # Centralized configurations & hyperparameter specs
-│   ├── utils/                        # Logging, custom exceptions & metrics helpers
-│   ├── components/                   # Ingestion, Validation, Preprocessing, Trainer, Evaluator
-│   └── pipeline/                     # Training & Inference orchestrators
-├── app/                              # FastAPI Web Server & Pydantic API Schemas
-├── artifacts/                        # Saved models, encoders, scalers, calibration curves & SHAP plots
-├── notebooks/                        # Exploratory Data Analysis & experiment notebooks
+├── notebooks/                        # Exploratory Data Analysis & Notebooks
 │   ├── 01_exploratory_data_analysis.ipynb
 │   ├── 02_data_validation_and_cleaning.ipynb
 │   ├── 03_feature_engineering_and_preprocessing.ipynb
 │   └── 04_model_training_and_evaluation.ipynb
-├── tests/                            # Unit & Integration test suite
+├── tests/                            # PyTest unit & integration test suite
+│   ├── __init__.py
+│   ├── test_api.py                   # FastAPI endpoint tests
+│   └── test_pipeline.py              # Inference & data frame creation tests
+├── Dockerfile                        # Multi-stage production container image
+├── docker-compose.yml                # Microservice orchestration (API + UI)
+├── .dockerignore                     # Docker build exclusion rules
 ├── requirements.txt                  # Python dependencies
-├── .gitignore                        # Git exclusion rules
 └── README.md                         # Project documentation
 ```
 
 ---
 
-## 🌟 Key Features
+## 🌟 Quick Start Guide
 
-- **Multi-Model Benchmarking**: Baseline Logistic Regression, XGBoost, and Deep Neural Networks (Keras MLP) evaluated side-by-side.
-- **Automated Preprocessing Pipelines**: Scikit-Learn `ColumnTransformer` & Pipelines for leak-free scaling, encoding, and class imbalance handling.
-- **Threshold Optimization & Calibration**: Precision-Recall utility tuning and probability calibration (Platt / Isotonic Scaling) for financial risk scoring.
-- **SHAP Explainability & Error Auditing**: Global/local feature attributions and False Positive / False Negative risk inspection.
-- **FastAPI Microservice**: High-throughput RESTful API for real-time inference with Pydantic payload validation.
+### 1. Running Locally with Python Virtual Environment
 
----
-
-## 🚀 Quick Start Guide
-
-### 1. Environment Setup
+Activate your virtual environment and install requirements:
 ```bash
-python -m venv venv
-# On Windows
-venv\Scripts\activate
-# On Linux/macOS
-source venv/bin/activate
+# On Windows PowerShell
+.\venv\Scripts\Activate.ps1
 
+# Install requirements
 pip install -r requirements.txt
 ```
 
+#### Launch the FastAPI Microservice:
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+- Interactive API Docs (Swagger): `http://localhost:8000/docs`
+- Health Endpoint: `http://localhost:8000/health`
+
+#### Launch the Streamlit Web Dashboard:
+```bash
+streamlit run ui/app.py --server.port 8501
+```
+- Open Browser: `http://localhost:8501`
+
 ---
 
-## 📌 Project Roadmap
+### 2. Deployment via Docker & Docker Compose
 
-- [x] **Step 1: Project Setup & Modular Architecture**
-  - Set up `RiskPulse DeepML` workspace, `venv` environment, and modular `src/` directory layout.
+To build and run both the API backend and Streamlit UI in isolated containers:
+```bash
+docker-compose up --build
+```
+- **FastAPI Backend**: `http://localhost:8000`
+- **Streamlit Web Dashboard**: `http://localhost:8501`
 
-- [/] **Step 2: EDA, Data Validation & Outlier Cleaning** (`notebooks/`)
-  - Perform exploratory data analysis, remove duplicates, filter invalid demographic/financial values, and export cleaned dataset.
+---
 
-- [ ] **Step 3: Feature Engineering, Splitting & Preprocessing Pipelines**
-  - Define target ($y = \text{loan\_status}$), establish stratified train-test split, address class imbalance, and build Scikit-Learn `ColumnTransformer` pipelines.
-
-- [ ] **Step 4: Model Training, Cross-Validation & Benchmarking**
-  - Train and evaluate Baseline Logistic Regression, XGBoost, and Keras Deep Neural Networks using Stratified Cross-Validation.
-
-- [ ] **Step 5: Threshold Optimization & Probability Calibration**
-  - Optimize classification decision thresholds for loan default risk and calibrate raw output probabilities using Platt / Isotonic Scaling.
-
-- [ ] **Step 6: Explainable AI (SHAP) & Error Auditing**
-  - Generate SHAP global summary and local waterfall plots for regulatory transparency; audit False Positives and False Negatives.
-
-- [ ] **Step 7: Production Pipeline Refactoring & Model Artifact Serialization**
-  - Refactor notebook logic into modular `src/components/` and serialize final trained models, encoders, and scalers to `artifacts/`.
-
-- [ ] **Step 8: FastAPI REST Service & Docker Deployment**
-  - Build real-time inference API endpoints (`/predict`, `/health`) with Pydantic validation and package into Docker containers.
+## 🧪 Running Tests
+```bash
+pytest
+```

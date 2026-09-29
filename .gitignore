@@ -27,16 +27,19 @@ ENV/
 env.bak/
 venv.bak/
 
+# Logs
+logs/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
 # Machine Learning Artifacts & Models
-artifacts/*.h5
-artifacts/*.keras
-artifacts/*.joblib
-artifacts/*.pkl
-artifacts/*.png
-artifacts/*.json
+*.pkl
+*.h5
+*.keras
+*.joblib
+*.png
+*.json
 !artifacts/.gitkeep
 
 # IDEs
