@@ -164,8 +164,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# API Endpoint Config
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+# API Endpoint Config (Ensure no trailing slash)
+API_URL = os.getenv("API_URL", "http://localhost:8000").strip().rstrip('/')
 
 # Header
 st.markdown("""
@@ -330,7 +330,7 @@ with tab1:
 
                 else:
                     status_box.update(label="❌ Assessment Failed", state="error", expanded=True)
-                    st.error(f"Error from API: {exp_res.text}")
+                    st.error(f"Error from API ({exp_res.status_code}): {exp_res.text}")
             except Exception as e:
                 status_box.update(label="❌ Connection Failed", state="error", expanded=True)
                 st.error(f"Connection failed: {str(e)}")
@@ -387,7 +387,7 @@ with tab2:
                         st.markdown('</div>', unsafe_allow_html=True)
                     else:
                         batch_status.update(label="❌ Batch Failed", state="error", expanded=True)
-                        st.error(f"Batch API error: {res.text}")
+                        st.error(f"Batch API error ({res.status_code}): {res.text}")
                 except Exception as e:
                     batch_status.update(label="❌ Execution Error", state="error", expanded=True)
                     st.error(f"Batch scoring failed: {str(e)}")
