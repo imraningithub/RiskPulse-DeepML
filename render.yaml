@@ -5,11 +5,12 @@ services:
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     plan: free
     region: oregon
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.12
+        value: 3.12.7
 
   # 2. Streamlit Web UI Dashboard
   - type: web
@@ -21,6 +22,6 @@ services:
     region: oregon
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.12
+        value: 3.12.7
       - key: API_URL
         value: https://riskpulse-api-4alt.onrender.com

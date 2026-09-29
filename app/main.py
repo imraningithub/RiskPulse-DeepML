@@ -1,5 +1,5 @@
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.schemas import (
@@ -38,8 +38,10 @@ def root():
     }
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
-def check_health(predictor: PredictPipeline = Depends(get_prediction_pipeline)):
+def check_health(response: Response, predictor: PredictPipeline = Depends(get_prediction_pipeline)):
     model_loaded = predictor.model is not None
+    if not model_loaded:
+        response.status_code = 503
     return HealthResponse(
         status="healthy" if model_loaded else "unhealthy",
         model_loaded=model_loaded,

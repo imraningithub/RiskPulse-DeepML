@@ -41,6 +41,8 @@ logs/
 *.png
 *.json
 !artifacts/.gitkeep
+!artifacts/credit_risk_model.pkl
+!artifacts/best_threshold.pkl
 
 # IDEs
 .vscode/
