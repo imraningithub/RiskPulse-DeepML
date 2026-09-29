@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.preprocessing import OneHotEncoder
 from xgboost import XGBClassifier
 import joblib
@@ -51,24 +52,26 @@ class TrainPipeline:
             counts = np.bincount(y_train)
             scale_weight = counts[0] / counts[1]
 
-            model_pipeline = Pipeline([
+            # Same recipe as notebooks/04: XGBoost (class imbalance via scale_pos_weight),
+            # wrapped in Platt (sigmoid) probability calibration with 5-fold CV.
+            base_pipeline = Pipeline([
                 ('preprocessor', preprocessor_xg),
                 ('classifier', XGBClassifier(
                     learning_rate=0.1,
                     scale_pos_weight=scale_weight,
-                    random_state=42,
-                    n_estimators=300,
-                    max_depth=5
+                    random_state=42
                 ))
             ])
+            model_pipeline = CalibratedClassifierCV(base_pipeline, method="sigmoid", cv=5)
 
-            logger.info("Fitting XGBoost pipeline on training data...")
+            logger.info("Fitting calibrated XGBoost pipeline on training data...")
             model_pipeline.fit(X_train, y_train)
 
             os.makedirs(os.path.dirname(self.trainer_config.model_file_path), exist_ok=True)
             joblib.dump(model_pipeline, self.trainer_config.model_file_path)
             logger.info(f"Model saved to {self.trainer_config.model_file_path}")
 
+            # Operating point chosen for the API (configurable); see notebook 04 section 5 for the F1-vs-threshold analysis.
             best_threshold = 0.45
             joblib.dump(best_threshold, self.trainer_config.threshold_file_path)
             logger.info(f"Threshold saved to {self.trainer_config.threshold_file_path}")

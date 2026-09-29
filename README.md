@@ -22,7 +22,7 @@
 - **Explainable predictions**: SHAP-based per-feature drivers show which inputs push the risk up or down (`/explain`).
 - **Batch scoring**: upload many applications at once and get portfolio-level risk analytics (`/predict/batch`).
 - **Threshold simulator**: explore the trade-off between catching defaulters and rejecting good applicants as the decision threshold moves.
-- **Calibrated probabilities**: the output is a usable probability, not just a score (`CalibratedClassifierCV`, sigmoid). The tuned decision threshold is **0.45**.
+- **Calibrated probabilities**: the output is a usable probability, not just a score (`CalibratedClassifierCV`, sigmoid). The decision threshold is **0.45** (an adjustable operating point).
 - **Validated inputs**: Pydantic schemas reject out-of-range values with clear errors.
 - **Deploy-safe health check**: `/health` returns HTTP 503 if the model fails to load, so a broken deploy fails loudly instead of serving wrong answers.
 
@@ -36,7 +36,7 @@ Evaluated on a stratified 20% hold-out set (6,305 applicants, ~22% defaults), fr
 | Logistic Regression (baseline) | 0.82 | 0.56 | 0.79 | 0.65 |
 | **XGBoost** | **0.92** | **0.82** | **0.79** | **0.81** |
 
-The XGBoost model was tuned with 5-fold stratified cross-validation (`RandomizedSearchCV`, targeting PR-AUC), then calibrated and given an optimised decision threshold. The notebook also benchmarks a Keras MLP neural network. The dataset is the public *Credit Risk Dataset* (`data/credit_risk_dataset.csv`), and the modelling workflow is documented across four notebooks (EDA → validation & cleaning → feature engineering → training & evaluation).
+The XGBoost model was compared against the baseline with 5-fold stratified cross-validation, and a `RandomizedSearchCV` search (PR-AUC) was run in the notebook. The model served by the API is XGBoost with default parameters (class imbalance handled via `scale_pos_weight`), wrapped in Platt-scaling calibration. The dataset is the public *Credit Risk Dataset* (`data/credit_risk_dataset.csv`), and the modelling workflow is documented across four notebooks (EDA → validation & cleaning → feature engineering → training & evaluation).
 
 ---
 
@@ -102,7 +102,7 @@ Credit Risk/
 │   └── utils/                        # Logging & custom exception helpers
 ├── artifacts/                        # Serialized production model & threshold
 │   ├── credit_risk_model.pkl         # Trained & calibrated XGBoost pipeline
-│   └── best_threshold.pkl            # Optimised decision threshold
+│   └── best_threshold.pkl            # Decision threshold
 ├── data/                             # Raw & cleaned credit risk datasets
 ├── notebooks/                        # EDA → cleaning → feature engineering → modelling
 ├── tests/                            # pytest suite (API + pipeline)

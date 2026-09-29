@@ -106,15 +106,9 @@ class PredictPipeline:
             drivers.sort(key=lambda x: abs(x["impact"]), reverse=True)
             return drivers[:8]
         except Exception as e:
-            logger.warning(f"SHAP explanation fallback: {str(e)}")
-            # Graceful fallback if SHAP tree extraction encounters non-standard wrapper
-            return [
-                {"feature": "loan_percent_income", "impact": 0.35, "direction": "Increases Risk"},
-                {"feature": "loan_int_rate", "impact": 0.28, "direction": "Increases Risk"},
-                {"feature": "person_income", "impact": -0.22, "direction": "Decreases Risk"},
-                {"feature": "cb_person_default_on_file_Y", "impact": 0.18, "direction": "Increases Risk"},
-                {"feature": "person_home_ownership_RENT", "impact": 0.12, "direction": "Increases Risk"}
-            ]
+            # Never return placeholder drivers: an explanation that is not computed from the model is misleading.
+            logger.error(f"SHAP explanation failed: {str(e)}")
+            raise CustomException(e, sys)
 
 
 class CustomData:
