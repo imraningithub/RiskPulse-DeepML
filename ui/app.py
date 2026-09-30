@@ -166,6 +166,27 @@ st.markdown("""
 
 # API Endpoint Config (Ensure no trailing slash)
 API_URL = os.getenv("API_URL", "http://localhost:8000").strip().rstrip('/')
+# Render free tier sleeps when idle; the first request after a wake-up can take ~20s
+API_TIMEOUT = 60
+
+WARMUP_PAYLOAD = {
+    "person_age": 28, "person_income": 65000.0, "person_home_ownership": "RENT",
+    "person_emp_length": 4.0, "loan_intent": "EDUCATION", "loan_grade": "B",
+    "loan_amnt": 10000.0, "loan_int_rate": 11.14, "loan_percent_income": 0.15,
+    "cb_person_default_on_file": "N", "cb_person_cred_hist_length": 4
+}
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def warm_up_api():
+    """Wake the API and prime the SHAP explainer so the user's first click is fast.
+
+    Raises on failure so st.cache_data does not cache an OFFLINE/DEGRADED result.
+    """
+    res = requests.get(f"{API_URL}/health", timeout=API_TIMEOUT)
+    res.raise_for_status()
+    requests.post(f"{API_URL}/explain", json=WARMUP_PAYLOAD, timeout=API_TIMEOUT)
+    return res.json()
 
 # Header
 st.markdown("""
@@ -179,14 +200,13 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### ⚙️ Engine Status")
     try:
-        res = requests.get(f"{API_URL}/health", timeout=3)
-        if res.status_code == 200:
-            health = res.json()
-            st.markdown('<span class="status-badge badge-success">ONLINE</span>', unsafe_allow_html=True)
-            st.markdown(f"**Loaded Threshold**: `{health['threshold']}`")
-            st.markdown(f"**API Version**: `{health['version']}`")
-        else:
-            st.markdown('<span class="status-badge badge-warning">DEGRADED</span>', unsafe_allow_html=True)
+        with st.spinner("⏳ Waking up the model (free tier, ~30s)..."):
+            health = warm_up_api()
+        st.markdown('<span class="status-badge badge-success">ONLINE</span>', unsafe_allow_html=True)
+        st.markdown(f"**Loaded Threshold**: `{health['threshold']}`")
+        st.markdown(f"**API Version**: `{health['version']}`")
+    except requests.exceptions.HTTPError:
+        st.markdown('<span class="status-badge badge-warning">DEGRADED</span>', unsafe_allow_html=True)
     except Exception:
         st.markdown('<span class="status-badge badge-danger">OFFLINE</span>', unsafe_allow_html=True)
         st.caption(f"Backend URL: `{API_URL}`")
@@ -252,10 +272,11 @@ with tab1:
             st.write("📡 Connecting to RiskPulse DeepML Microservice...")
             time.sleep(0.3)
             st.write("⚡ Computing Platt-calibrated default probability...")
+            st.caption("First request after the server has been idle can take ~20s.")
             time.sleep(0.3)
-            
+
             try:
-                exp_res = requests.post(f"{API_URL}/explain", json=payload, timeout=10)
+                exp_res = requests.post(f"{API_URL}/explain", json=payload, timeout=API_TIMEOUT)
                 st.write("🔍 Extracting local SHAP feature attributions...")
                 time.sleep(0.2)
                 
@@ -331,6 +352,9 @@ with tab1:
                 else:
                     status_box.update(label="❌ Assessment Failed", state="error", expanded=True)
                     st.error(f"Error from API ({exp_res.status_code}): {exp_res.text}")
+            except requests.exceptions.Timeout:
+                status_box.update(label="⏳ Model Server Waking Up", state="error", expanded=True)
+                st.warning("The model server is waking up. Click Evaluate again in a few seconds.")
             except Exception as e:
                 status_box.update(label="❌ Connection Failed", state="error", expanded=True)
                 st.error(f"Connection failed: {str(e)}")
@@ -350,7 +374,7 @@ with tab2:
             with st.status("📊 Scoring batch loan portfolio...", expanded=True) as batch_status:
                 try:
                     records = df_batch.to_dict(orient="records")
-                    res = requests.post(f"{API_URL}/predict/batch", json={"applications": records})
+                    res = requests.post(f"{API_URL}/predict/batch", json={"applications": records}, timeout=API_TIMEOUT)
                     if res.status_code == 200:
                         batch_status.update(label="✅ Batch Scoring Complete!", state="complete", expanded=False)
                         batch_res = res.json()
